@@ -38,14 +38,4 @@ export class UserService {
     return deletedUser;
   }
 
-  async addRefreshToken (data: Prisma.RefreshTokenCreateInput) {
-    await this.prisma.refreshToken.create({ data });
-    return true;
-  }
-
-  async findRefreshToken (token: string) {
-    const refreshToken = await this.prisma.refreshToken.findFirst({ where: { token } });
-    return refreshToken;
-  }
-
 }

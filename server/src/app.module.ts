@@ -10,22 +10,22 @@ import config from "./utils/config";
 import { JwtModule } from '@nestjs/jwt';
 
 @Module({
-  imports: [DatabaseModule, AuthModule, ChatModule, UserModule, 
+  imports: [DatabaseModule, AuthModule, ChatModule, UserModule,
     ConfigModule.forRoot({
-    isGlobal: true,
-    cache: true,
-    load: [config]
-  }),
-  JwtModule.registerAsync({
-    imports: [ConfigModule],
-    useFactory: async (configService) => ({
-      secret: configService.get('jwt.secret'),
-      signOptions: { expiresIn: '1h' }
+      isGlobal: true,
+      cache: true,
+      load: [config]
     }),
-    global: true,
-    inject: [ConfigService]  
-  })
-],
+    JwtModule.registerAsync({
+      imports: [ConfigModule],
+      useFactory: async (configService) => ({
+        secret: configService.get('jwt.secret'),
+        signOptions: { expiresIn: '1h' }
+      }),
+      global: true,
+      inject: [ConfigService]
+    })
+  ],
   controllers: [AppController],
   providers: [AppService],
 })

@@ -9,13 +9,17 @@ import { BcryptService } from 'src/utils/bcrypt/bcrypt.service';
 import { JwtService } from '@nestjs/jwt';
 import { v4 as uuidv4 } from 'uuid';
 import { RefreshTokenDto } from './dto/referesh-token.dto';
+import { Prisma, RefreshToken } from '@prisma/client';
+import { DatabaseService } from 'src/database/database.service';
+import { Optional } from '@prisma/client/runtime/library';
 
 @Injectable()
 export class AuthService {
   constructor(
     private userService: UserService,
     private bcryptService: BcryptService,
-    private jwtService : JwtService
+    private jwtService: JwtService,
+    private prisma: DatabaseService
   ) { }
 
   async signUp(signUpDto: SignUpDto) {
@@ -24,12 +28,12 @@ export class AuthService {
     if (userExists) {
       throw new BadRequestException(ErrorMessages.EMAIL_ALREADY_EXISTS);
     }
-    
+
     // Hash the password
     const hashedPassword = await this.bcryptService.hash(signUpDto.password);
 
     // Create a new user
-    const user = await this.userService.create({...signUpDto, password: hashedPassword});
+    const user = await this.userService.create({ ...signUpDto, password: hashedPassword });
 
     // Return nothing
     return;
@@ -49,16 +53,15 @@ export class AuthService {
     }
 
     // Sign Jwt token
-    const accessToken = this.jwtService.sign({email: user.email, id: user.id});
-    const refreshToken = uuidv4();
-    await this.userService.addRefreshToken({token: refreshToken, userId: user.id, expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 3)});
-    return {accessToken, refreshToken};
+    const accessToken = this.jwtService.sign({ email: user.email, id: user.id });
+    const refreshToken = await this.addRefreshToken({ userId: user.id, expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 3) });
+    return { accessToken, refreshToken };
   }
 
-  async refreshToken(refreshTokenDto: RefreshTokenDto){
-    
+  async refreshToken(refreshTokenDto: RefreshTokenDto) {
+
   }
-  
+
 
   forgotPassword(forgotPasswordDto: ForgotPasswordDto) {
     return `This action returns token`;
@@ -66,5 +69,30 @@ export class AuthService {
 
   resetPassword(resetPasswordDto: ResetPasswordDto) {
     return `This action resets the password`;
+  }
+
+
+  private async addRefreshToken(data: Omit<Prisma.RefreshTokenCreateInput, "token">): Promise<string> {
+    // Delete all expired tokens
+    await this.prisma.refreshToken.deleteMany({ where: { expiresAt: { lt: new Date() } } });
+    // Check if the user already has a refresh token
+    const existingRefreshToken = await this.prisma.refreshToken.findFirst({ where: { userId: data.userId } });
+    if (existingRefreshToken) {
+      return existingRefreshToken.token;
+    }
+
+
+    // Generate a unique token
+    let token: string;
+    do {
+      token = uuidv4(); 
+    } while (!!await this.findRefreshToken(token));
+    await this.prisma.refreshToken.create({ data: { ...data, token } });
+    return token;
+  }
+
+  private async findRefreshToken(token: string) {
+    const refreshToken = await this.prisma.refreshToken.findUnique({ where: { token } });
+    return refreshToken;
   }
 }

@@ -16,11 +16,13 @@ const error_messages_enum_1 = require("../constants/error-messages.enum");
 const bcrypt_service_1 = require("../utils/bcrypt/bcrypt.service");
 const jwt_1 = require("@nestjs/jwt");
 const uuid_1 = require("uuid");
+const database_service_1 = require("../database/database.service");
 let AuthService = class AuthService {
-    constructor(userService, bcryptService, jwtService) {
+    constructor(userService, bcryptService, jwtService, prisma) {
         this.userService = userService;
         this.bcryptService = bcryptService;
         this.jwtService = jwtService;
+        this.prisma = prisma;
     }
     async signUp(signUpDto) {
         const userExists = await this.userService.findUserByEmail(signUpDto.email);
@@ -41,8 +43,7 @@ let AuthService = class AuthService {
             throw new common_1.UnauthorizedException(error_messages_enum_1.ErrorMessages.INVALID_EMAIL_PASSWORD);
         }
         const accessToken = this.jwtService.sign({ email: user.email, id: user.id });
-        const refreshToken = (0, uuid_1.v4)();
-        await this.userService.addRefreshToken({ token: refreshToken, userId: user.id, expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 3) });
+        const refreshToken = await this.addRefreshToken({ userId: user.id, expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 3) });
         return { accessToken, refreshToken };
     }
     async refreshToken(refreshTokenDto) {
@@ -53,12 +54,26 @@ let AuthService = class AuthService {
     resetPassword(resetPasswordDto) {
         return `This action resets the password`;
     }
+    async addRefreshToken(data) {
+        const existingRefreshToken = await this.prisma.refreshToken.findFirst({ where: { userId: data.userId, ex } });
+        let token;
+        do {
+            token = (0, uuid_1.v4)();
+        } while (!!await this.findRefreshToken(token));
+        const refreshToken = await this.prisma.refreshToken.create({ data: { ...data, token } });
+        return token;
+    }
+    async findRefreshToken(token) {
+        const refreshToken = await this.prisma.refreshToken.findUnique({ where: { token } });
+        return refreshToken;
+    }
 };
 exports.AuthService = AuthService;
 exports.AuthService = AuthService = __decorate([
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [user_service_1.UserService,
         bcrypt_service_1.BcryptService,
-        jwt_1.JwtService])
+        jwt_1.JwtService,
+        database_service_1.DatabaseService])
 ], AuthService);
 //# sourceMappingURL=auth.service.js.map

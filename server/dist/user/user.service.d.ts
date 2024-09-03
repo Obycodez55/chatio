@@ -1,7 +1,6 @@
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { DatabaseService } from 'src/database/database.service';
-import { Prisma } from '@prisma/client';
 export declare class UserService {
     private prisma;
     constructor(prisma: DatabaseService);
@@ -82,14 +81,5 @@ export declare class UserService {
         createdAt: Date;
         updatedAt: Date;
         refreshTokenId: string | null;
-    }>;
-    addRefreshToken(data: Prisma.RefreshTokenCreateInput): Promise<boolean>;
-    findRefreshToken(token: string): Promise<{
-        id: string;
-        userId: string;
-        token: string;
-        expiresAt: Date;
-        createdAt: Date;
-        updatedAt: Date;
     }>;
 }

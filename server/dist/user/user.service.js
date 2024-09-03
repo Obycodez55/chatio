@@ -40,14 +40,6 @@ let UserService = class UserService {
         const deletedUser = await this.prisma.user.delete({ where: { id } });
         return deletedUser;
     }
-    async addRefreshToken(data) {
-        await this.prisma.refreshToken.create({ data });
-        return true;
-    }
-    async findRefreshToken(token) {
-        const refreshToken = await this.prisma.refreshToken.findFirst({ where: { token } });
-        return refreshToken;
-    }
 };
 exports.UserService = UserService;
 exports.UserService = UserService = __decorate([
