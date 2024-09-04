@@ -1,15 +1,12 @@
 import React from "react";
 import { IoMdEye, IoMdEyeOff } from "react-icons/io";
 
-type Props = {};
 
-const Login = (props: Props) => {
+const Login = () => {
   const [passwordOpen, setPasswordOpen] = React.useState(false);
   return (
-    <div className="flex flex-col items-center justify-center min-w-96 mx-auto">
-      <div className="w-full p-6 rounded-lg shadow-md bg-gray-400 bg-clip-padding backdrop-filter backdrop-blur-lg bg-opacity-0">
-        <h1 className="text-3xl font-semibold text-center text-gray-300">
-          Login
+    <h1 className="text-3xl font-semibold text-center text-gray-300">
+          SignUp
           <span className="text-blue-500"> Chatio</span>
         </h1>
         <form>
